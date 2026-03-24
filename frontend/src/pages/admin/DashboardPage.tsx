@@ -8,9 +8,12 @@ import {
   fetchAdminBookings, updateBookingStatus, deleteAdminBooking,
   fetchAdminContacts, fetchAdminUsers, deleteAdminUser,
   fetchAdminGallery, createAdminGallery, deleteAdminGallery,
+  fetchSmtpSettings, updateSmtpSettings, testSmtpEmail,
+  type SmtpSettings,
 } from '../../api/admin';
+import { fetchAdminBlogs, createAdminBlog, updateAdminBlog, deleteAdminBlog } from '../../api/blogs';
 import { getImageUrl } from '../../api/client';
-import type { AdminStats, Room, Booking, GalleryItem, User, Contact } from '../../types';
+import type { AdminStats, Room, Booking, GalleryItem, User, Contact, Blog } from '../../types';
 import toast from 'react-hot-toast';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -19,7 +22,7 @@ import { Bar } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-type Tab = 'rooms' | 'bookings' | 'gallery' | 'users' | 'contacts';
+type Tab = 'rooms' | 'bookings' | 'gallery' | 'users' | 'contacts' | 'blogs' | 'settings';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -29,6 +32,7 @@ export default function DashboardPage() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Room form
@@ -38,6 +42,20 @@ export default function DashboardPage() {
     room_title: '', description: '', price: '', wifi: 'yes', room_type: '', image_url: '',
   });
   const [roomImageFile, setRoomImageFile] = useState<File | null>(null);
+
+  // Blog form
+  const [showBlogForm, setShowBlogForm] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [blogForm, setBlogForm] = useState({
+    title: '', excerpt: '', content: '', image: '', category: '', author: '',
+  });
+
+  // SMTP settings
+  const [smtpForm, setSmtpForm] = useState<SmtpSettings>({
+    smtp_host: '', smtp_port: '587', smtp_username: '', smtp_password: '', smtp_sender: '', smtp_use_tls: 'true',
+  });
+  const [testEmail, setTestEmail] = useState('');
+  const [smtpTesting, setSmtpTesting] = useState(false);
 
   // Gallery form
   const [galleryUrl, setGalleryUrl] = useState('');
@@ -85,6 +103,23 @@ export default function DashboardPage() {
         case 'contacts': {
           const res = await fetchAdminContacts();
           setContacts(res.contacts);
+          break;
+        }
+        case 'blogs': {
+          const res = await fetchAdminBlogs();
+          setBlogs(res.blogs);
+          break;
+        }
+        case 'settings': {
+          const res = await fetchSmtpSettings();
+          setSmtpForm({
+            smtp_host: res.smtp_host || '',
+            smtp_port: res.smtp_port || '587',
+            smtp_username: res.smtp_username || '',
+            smtp_password: res.smtp_password || '',
+            smtp_sender: res.smtp_sender || '',
+            smtp_use_tls: res.smtp_use_tls || 'true',
+          });
           break;
         }
       }
@@ -218,6 +253,74 @@ export default function DashboardPage() {
     }
   };
 
+  // Blogs
+  const openBlogForm = (blog?: Blog) => {
+    if (blog) {
+      setEditingBlog(blog);
+      setBlogForm({
+        title: blog.title, excerpt: blog.excerpt || '', content: blog.content || '',
+        image: blog.image_raw || '', category: blog.category || '', author: blog.author || '',
+      });
+    } else {
+      setEditingBlog(null);
+      setBlogForm({ title: '', excerpt: '', content: '', image: '', category: '', author: '' });
+    }
+    setShowBlogForm(true);
+  };
+
+  const handleBlogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingBlog) {
+        await updateAdminBlog(editingBlog.id, blogForm);
+        toast.success('Blog updated');
+      } else {
+        await createAdminBlog(blogForm);
+        toast.success('Blog created');
+      }
+      setShowBlogForm(false);
+      loadTabData('blogs');
+    } catch {
+      toast.error('Failed to save blog');
+    }
+  };
+
+  const handleDeleteBlog = async (id: number) => {
+    if (!confirm('Delete this blog post?')) return;
+    try {
+      await deleteAdminBlog(id);
+      toast.success('Blog deleted');
+      loadTabData('blogs');
+    } catch {
+      toast.error('Failed to delete blog');
+    }
+  };
+
+  // SMTP
+  const handleSmtpSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateSmtpSettings(smtpForm);
+      toast.success('SMTP settings saved');
+    } catch {
+      toast.error('Failed to save SMTP settings');
+    }
+  };
+
+  const handleSmtpTest = async () => {
+    if (!testEmail) { toast.error('Enter a test email address'); return; }
+    setSmtpTesting(true);
+    try {
+      const res = await testSmtpEmail(testEmail);
+      if (res.success) toast.success('Test email sent!');
+      else toast.error(res.message);
+    } catch {
+      toast.error('Failed to send test email');
+    } finally {
+      setSmtpTesting(false);
+    }
+  };
+
   // Users
   const handleDeleteUser = async (id: number) => {
     if (!confirm('Delete this user?')) return;
@@ -254,6 +357,8 @@ export default function DashboardPage() {
     { key: 'gallery', label: 'Gallery' },
     { key: 'users', label: 'Users' },
     { key: 'contacts', label: 'Messages' },
+    { key: 'blogs', label: 'Blogs' },
+    { key: 'settings', label: 'Settings' },
   ];
 
   return (
@@ -468,7 +573,7 @@ export default function DashboardPage() {
                               src={getImageUrl(room.image)}
                               alt={room.room_title || ''}
                               className="w-12 h-12 rounded object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).src = '/images/room/room1.jpg'; }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/images/room1.jpg'; }}
                             />
                             <span className="font-medium">{room.room_title || `#${room.id}`}</span>
                           </div>
@@ -609,7 +714,7 @@ export default function DashboardPage() {
                       src={getImageUrl(item.image)}
                       alt={`Gallery ${item.id}`}
                       className="w-full aspect-square object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/room/room1.jpg'; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/room1.jpg'; }}
                     />
                     <button
                       onClick={() => handleDeleteGallery(item.id)}
@@ -713,6 +818,287 @@ export default function DashboardPage() {
                 {contacts.length === 0 && (
                   <p className="text-center py-8 text-gray-500">No messages found</p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* BLOGS TAB */}
+          {activeTab === 'blogs' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Blog Management</h3>
+                <button
+                  onClick={() => openBlogForm()}
+                  className="flex items-center gap-1 px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-md hover:bg-brand-primary-dark"
+                >
+                  <Plus size={16} /> New Post
+                </button>
+              </div>
+
+              {/* Blog Form Modal */}
+              {showBlogForm && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold">
+                        {editingBlog ? 'Edit Blog Post' : 'New Blog Post'}
+                      </h4>
+                      <button onClick={() => setShowBlogForm(false)}>
+                        <X size={20} className="text-gray-400 hover:text-gray-600" />
+                      </button>
+                    </div>
+                    <form onSubmit={handleBlogSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input
+                          type="text"
+                          required
+                          value={blogForm.title}
+                          onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                          <input
+                            type="text"
+                            value={blogForm.category}
+                            onChange={(e) => setBlogForm({ ...blogForm, category: e.target.value })}
+                            placeholder="e.g. Travel, Tips"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                          <input
+                            type="text"
+                            value={blogForm.author}
+                            onChange={(e) => setBlogForm({ ...blogForm, author: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <input
+                          type="text"
+                          value={blogForm.image}
+                          onChange={(e) => setBlogForm({ ...blogForm, image: e.target.value })}
+                          placeholder="https://..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                        <textarea
+                          rows={2}
+                          value={blogForm.excerpt}
+                          onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                        <textarea
+                          rows={6}
+                          value={blogForm.content}
+                          onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-2 bg-brand-primary text-white font-medium rounded-md hover:bg-brand-primary-dark flex items-center justify-center gap-2"
+                      >
+                        <Save size={16} />
+                        {editingBlog ? 'Update Post' : 'Create Post'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Blog Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600">Post</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600">Category</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600">Author</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
+                      <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {blogs.map((blog) => (
+                      <tr key={blog.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {blog.image && (
+                              <img
+                                src={getImageUrl(blog.image)}
+                                alt={blog.title}
+                                className="w-12 h-12 rounded object-cover"
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium line-clamp-1">{blog.title}</p>
+                              <p className="text-xs text-gray-500 line-clamp-1">{blog.excerpt}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{blog.category || '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{blog.author || '-'}</td>
+                        <td className="px-4 py-3 text-gray-600 text-xs">
+                          {new Date(blog.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => openBlogForm(blog)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBlog(blog.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {blogs.length === 0 && (
+                  <p className="text-center py-8 text-gray-500">No blog posts found</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SETTINGS TAB */}
+          {activeTab === 'settings' && (
+            <div className="max-w-2xl">
+              <h3 className="text-lg font-semibold mb-1">SMTP Email Settings</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Configure your email server to send booking confirmations and contact auto-replies to guests.
+              </p>
+              <form onSubmit={handleSmtpSave} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Host</label>
+                    <input
+                      type="text"
+                      value={smtpForm.smtp_host || ''}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, smtp_host: e.target.value })}
+                      placeholder="smtp.gmail.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
+                    <input
+                      type="text"
+                      value={smtpForm.smtp_port || ''}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, smtp_port: e.target.value })}
+                      placeholder="587"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Username / Email</label>
+                    <input
+                      type="text"
+                      value={smtpForm.smtp_username || ''}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, smtp_username: e.target.value })}
+                      placeholder="your-email@gmail.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password / App Password</label>
+                    <input
+                      type="password"
+                      value={smtpForm.smtp_password || ''}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, smtp_password: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sender Email (From)</label>
+                    <input
+                      type="text"
+                      value={smtpForm.smtp_sender || ''}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, smtp_sender: e.target.value })}
+                      placeholder="noreply@starterhotel.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Use TLS</label>
+                    <select
+                      value={smtpForm.smtp_use_tls || 'true'}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, smtp_use_tls: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    >
+                      <option value="true">Yes (recommended)</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-brand-primary text-white font-medium rounded-md hover:bg-brand-primary-dark flex items-center gap-2"
+                >
+                  <Save size={16} /> Save Settings
+                </button>
+              </form>
+
+              {/* Test Email */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Test Email Delivery</h4>
+                <div className="flex gap-3">
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="recipient@example.com"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSmtpTest}
+                    disabled={smtpTesting}
+                    className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-md hover:bg-amber-600 disabled:opacity-50"
+                  >
+                    {smtpTesting ? 'Sending...' : 'Send Test'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Save settings first, then send a test email to verify everything works.
+                </p>
+              </div>
+
+              {/* Help */}
+              <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-sm font-semibold text-blue-800 mb-2">Gmail Setup Guide</h4>
+                <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                  <li>Host: <code className="bg-blue-100 px-1 rounded">smtp.gmail.com</code> / Port: <code className="bg-blue-100 px-1 rounded">587</code></li>
+                  <li>Username: your full Gmail address</li>
+                  <li>Password: use an <strong>App Password</strong> (not your regular password)</li>
+                  <li>Go to Google Account &gt; Security &gt; 2-Step Verification &gt; App passwords</li>
+                  <li>TLS: Yes</li>
+                </ul>
               </div>
             </div>
           )}

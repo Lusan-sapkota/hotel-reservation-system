@@ -50,7 +50,7 @@ export default function GalleryPage() {
                     src={src}
                     alt={`Gallery ${index + 1}`}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/room/room1.jpg'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/room1.jpg'; }}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                     <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">

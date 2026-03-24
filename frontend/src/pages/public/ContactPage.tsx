@@ -11,8 +11,12 @@ export default function ContactPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await submitContact(form);
-      toast.success('Message sent successfully!');
+      const result = await submitContact(form);
+      if (result.email_confirmation_sent) {
+        toast.success('Message sent! A confirmation has been emailed to you.', { duration: 5000 });
+      } else {
+        toast.success('Message sent successfully!');
+      }
       setForm({ name: '', email: '', phone: '', message: '' });
     } catch {
       toast.error('Failed to send message. Please try again.');
@@ -102,7 +106,7 @@ export default function ContactPage() {
                   <div>
                     <h4 className="font-semibold text-brand-ink">Address</h4>
                     <p className="text-gray-600 text-sm mt-1">
-                      Location of Hotel, City, Country
+                      Thamel, Kathmandu 44600, Nepal
                     </p>
                   </div>
                 </div>
@@ -112,7 +116,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-brand-ink">Phone</h4>
-                    <p className="text-gray-600 text-sm mt-1">+12 1234567890</p>
+                    <p className="text-gray-600 text-sm mt-1">+977 1-4700123</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -121,7 +125,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-brand-ink">Email</h4>
-                    <p className="text-gray-600 text-sm mt-1">demo@gmail.com</p>
+                    <p className="text-gray-600 text-sm mt-1">info@starterhotel.com.np</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -140,7 +144,7 @@ export default function ContactPage() {
               <div className="mt-8 rounded-lg overflow-hidden shadow-sm">
                 <iframe
                   title="Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387190.2799140298!2d-74.25987584510595!3d40.697670063847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY!5e0!3m2!1sen!2sus!4v1"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.2!2d85.3103!3d27.7153!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb18fcb77fd4bd%3A0x58099b1deffed8d4!2sThamel%2C%20Kathmandu%2044600!5e0!3m2!1sen!2snp!4v1"
                   width="100%"
                   height="300"
                   style={{ border: 0 }}

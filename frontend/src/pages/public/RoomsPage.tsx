@@ -96,7 +96,7 @@ export default function RoomsPage() {
     }
 
     try {
-      await createBooking({
+      const result = await createBooking({
         room_id: selectedRoom.id,
         start_date: bookingForm.arrival,
         end_date: bookingForm.departure,
@@ -105,7 +105,11 @@ export default function RoomsPage() {
         phone: bookingForm.phone,
         total_price: calc.total,
       });
-      toast.success('Room booked successfully!');
+      if (result.email_confirmation_sent) {
+        toast.success('Room booked! Confirmation email sent to ' + bookingForm.email, { duration: 5000 });
+      } else {
+        toast.success('Room booked successfully!');
+      }
       setSelectedRoom(null);
       setAlternatives([]);
       setBookingForm((prev) => ({ ...prev, name: '', email: '', phone: '' }));
@@ -174,30 +178,62 @@ export default function RoomsPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Recommendations */}
             {recommendations.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
-                <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                  <Star size={18} className="fill-amber-400 text-amber-400" />
-                  Recommended for Your Dates
-                </h3>
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-lg font-semibold text-amber-800 flex items-center gap-2">
+                    <Star size={18} className="fill-amber-400 text-amber-400" />
+                    AI Recommended for Your Dates
+                  </h3>
+                  <span className="text-xs bg-amber-200/60 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                    Weighted Multi-Factor Algorithm
+                  </span>
+                </div>
+                <p className="text-xs text-amber-600 mb-4">
+                  Rooms ranked by rating (42%), price fit (28%), type match (20%), and amenities (10%)
+                </p>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {recommendations.map((room) => (
+                  {recommendations.map((room, idx) => (
                     <button
                       key={room.id}
                       onClick={() => { setSelectedRoom(room); setAlternatives([]); }}
-                      className={`text-left p-3 rounded-lg border-2 transition-colors ${
+                      className={`text-left p-4 rounded-lg border-2 transition-all ${
                         selectedRoom?.id === room.id
-                          ? 'border-brand-primary bg-brand-primary/5'
-                          : 'border-gray-200 hover:border-brand-primary/50 bg-white'
+                          ? 'border-brand-primary bg-brand-primary/5 shadow-md'
+                          : 'border-gray-200 hover:border-brand-primary/50 bg-white hover:shadow-sm'
                       }`}
                     >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-amber-600">#{idx + 1} Pick</span>
+                        {room.recommendation_score != null && (
+                          <span className="text-xs font-bold text-brand-primary">
+                            {(room.recommendation_score * 100).toFixed(0)}% match
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm font-semibold truncate">{room.room_title}</p>
-                      <p className="text-xs text-gray-500">${room.price}/night</p>
-                      {room.recommendation_score && (
-                        <div className="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-gray-500">${room.price}/night</p>
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <Star key={i} size={10} className={i < Math.round(room.average_rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} />
+                          ))}
+                        </div>
+                      </div>
+                      {room.recommendation_score != null && (
+                        <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-brand-gold rounded-full"
+                            className="h-full bg-gradient-to-r from-brand-gold to-amber-400 rounded-full transition-all"
                             style={{ width: `${room.recommendation_score * 100}%` }}
                           />
+                        </div>
+                      )}
+                      {room.recommendation_reasons && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {room.recommendation_reasons.map((reason, i) => (
+                            <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                              {reason}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </button>
@@ -223,7 +259,7 @@ export default function RoomsPage() {
                         src={getImageUrl(room.image)}
                         alt={room.room_title || 'Room'}
                         className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).src = '/images/room/room1.jpg'; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/images/room1.jpg'; }}
                       />
                     </div>
                     <div className="flex-1 p-5">
@@ -436,12 +472,15 @@ export default function RoomsPage() {
                   </div>
                 )}
 
-                {/* Alternative Slots */}
+                {/* Alternative Slots — Merged-Interval Gap-Scan Algorithm */}
                 {alternatives.length > 0 && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm font-medium text-red-700 mb-2 flex items-center gap-1">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm font-semibold text-red-700 mb-1 flex items-center gap-1">
                       <AlertCircle size={14} />
-                      Room unavailable. Try these dates:
+                      Room unavailable for selected dates
+                    </p>
+                    <p className="text-xs text-red-500 mb-3">
+                      Our gap-scan algorithm found these nearest available windows:
                     </p>
                     <div className="space-y-2">
                       {alternatives.map((slot, i) => (
@@ -449,12 +488,19 @@ export default function RoomsPage() {
                           key={i}
                           type="button"
                           onClick={() => applySlot(slot)}
-                          className="w-full text-left p-2 bg-white rounded border border-red-200 hover:border-brand-primary text-sm transition-colors"
+                          className="w-full text-left p-3 bg-white rounded-lg border border-red-200 hover:border-brand-primary hover:shadow-sm text-sm transition-all group"
                         >
-                          <span className="font-medium">{slot.start_date}</span>
-                          <span className="text-gray-400 mx-1">→</span>
-                          <span className="font-medium">{slot.end_date}</span>
-                          <span className="text-gray-500 ml-1">({slot.nights} nights)</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Calendar size={14} className="text-brand-primary" />
+                              <span className="font-semibold text-brand-ink">{slot.start_date}</span>
+                              <span className="text-gray-400">→</span>
+                              <span className="font-semibold text-brand-ink">{slot.end_date}</span>
+                            </div>
+                            <span className="text-xs bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-full font-medium group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                              {slot.nights} night{slot.nights !== 1 ? 's' : ''} — Click to book
+                            </span>
+                          </div>
                         </button>
                       ))}
                     </div>

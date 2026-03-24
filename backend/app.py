@@ -18,6 +18,7 @@ from routers.contacts_router import router as contacts_router
 from routers.gallery_router import router as gallery_router
 from routers.profile_router import router as profile_router
 from routers.ratings_router import router as ratings_router
+from routers.blogs_router import router as blogs_router
 from routers.rooms_router import router as rooms_router
 from services.image_service import MEDIA_DIR
 
@@ -44,6 +45,7 @@ app.include_router(bookings_router)
 app.include_router(gallery_router)
 app.include_router(contacts_router)
 app.include_router(ratings_router)
+app.include_router(blogs_router)
 app.include_router(admin_router)
 
 

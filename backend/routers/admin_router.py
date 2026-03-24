@@ -17,6 +17,9 @@ from services.booking_service import _serialize_booking
 from services.image_service import _as_public_image_path, _save_upload
 from services.room_service import _serialize_room
 from services.user_service import _serialize_user
+from services.settings_service import get_smtp_settings, save_smtp_settings
+from services.booking_service import _send_email
+from schemas.settings import SmtpSettingsRequest, TestEmailRequest
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -373,3 +376,47 @@ def admin_delete_gallery(
     db.delete(gallery)
     db.commit()
     return {"message": "Gallery image deleted"}
+
+
+# ── SMTP Settings ──────────────────────────────────────────────
+
+
+@router.get("/smtp-settings")
+def admin_get_smtp_settings(
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(get_current_admin),
+):
+    settings = get_smtp_settings(db)
+    # Mask password for security
+    if settings.get("smtp_password"):
+        settings["smtp_password"] = "••••••••"
+    return settings
+
+
+@router.put("/smtp-settings")
+def admin_update_smtp_settings(
+    payload: SmtpSettingsRequest,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(get_current_admin),
+):
+    data = payload.model_dump(exclude_none=True)
+    # Don't overwrite password with mask
+    if data.get("smtp_password") == "••••••••":
+        del data["smtp_password"]
+    save_smtp_settings(db, data)
+    return {"message": "SMTP settings updated"}
+
+
+@router.post("/smtp-test")
+def admin_test_smtp(
+    payload: TestEmailRequest,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(get_current_admin),
+):
+    ok, msg = _send_email(
+        db=db,
+        recipient=payload.recipient,
+        subject="SMTP Test — StarterHotel",
+        body="This is a test email from your StarterHotel admin panel.\n\nIf you received this, your SMTP settings are working correctly!",
+    )
+    return {"success": ok, "message": msg}

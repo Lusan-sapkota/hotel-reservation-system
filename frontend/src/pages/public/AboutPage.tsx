@@ -21,27 +21,28 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-brand-ink mb-2">Welcome to StarterHotel</h2>
+              <h2 className="text-3xl font-bold text-brand-ink mb-2">Welcome to StarterHotel, Kathmandu</h2>
               <div className="w-16 h-1 bg-brand-gold mb-6" />
               <p className="text-gray-600 mb-4 leading-relaxed">
-                Founded with a vision to provide unmatched hospitality, StarterHotel has been a beacon of
-                luxury and comfort since its inception. Our commitment to excellence is reflected in every
-                aspect of our service—from the meticulously designed rooms to our world-class dining experiences.
+                Nestled in the heart of Thamel, Kathmandu&apos;s most vibrant neighborhood, StarterHotel
+                blends traditional Nepali hospitality with modern comfort. Just steps from ancient temples,
+                bustling bazaars, and the gateway to the Himalayas, our hotel has welcomed travelers from
+                around the world since its founding.
               </p>
               <p className="text-gray-600 mb-4 leading-relaxed">
-                Our team of dedicated professionals works tirelessly to ensure that every guest feels at home.
-                We believe that true hospitality comes from the heart, and we strive to create unforgettable
-                experiences for each and every one of our visitors.
+                Our rooms are designed with locally sourced Newari woodwork, handwoven Dhaka textiles,
+                and modern amenities to create a uniquely Nepali experience. From our rooftop terrace,
+                guests can enjoy panoramic views of the Kathmandu Valley and the snow-capped Himalayan range.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Whether you&apos;re planning a romantic getaway, a family vacation, or a corporate retreat,
-                StarterHotel has everything you need for an extraordinary stay. We invite you to discover the
-                perfect blend of modern luxury and timeless elegance.
+                Whether you&apos;re preparing for an Everest Base Camp trek, exploring Kathmandu&apos;s
+                UNESCO World Heritage Sites, or simply seeking a peaceful retreat, StarterHotel is your
+                perfect home base in Nepal.
               </p>
             </div>
             <div className="relative">
               <img
-                src="/images/about-img.jpg"
+                src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80"
                 alt="About StarterHotel"
                 className="rounded-lg shadow-lg w-full object-cover h-[450px]"
               />

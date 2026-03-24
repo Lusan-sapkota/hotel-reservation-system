@@ -12,7 +12,7 @@ export default function ImageWithFallback({
   src,
   alt,
   className = '',
-  fallback = '/images/room/room1.jpg',
+  fallback = '/images/room1.jpg',
 }: ImageWithFallbackProps) {
   const [error, setError] = useState(false);
   const resolvedSrc = error ? fallback : getImageUrl(src);

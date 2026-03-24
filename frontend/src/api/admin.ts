@@ -87,3 +87,28 @@ export const deleteAdminGallery = async (galleryId: number) => {
   const { data } = await client.delete(`/api/admin/gallery/${galleryId}`);
   return data;
 };
+
+// SMTP Settings
+export interface SmtpSettings {
+  smtp_host: string | null;
+  smtp_port: string | null;
+  smtp_username: string | null;
+  smtp_password: string | null;
+  smtp_sender: string | null;
+  smtp_use_tls: string | null;
+}
+
+export const fetchSmtpSettings = async (): Promise<SmtpSettings> => {
+  const { data } = await client.get<SmtpSettings>('/api/admin/smtp-settings');
+  return data;
+};
+
+export const updateSmtpSettings = async (settings: Partial<SmtpSettings>) => {
+  const { data } = await client.put('/api/admin/smtp-settings', settings);
+  return data;
+};
+
+export const testSmtpEmail = async (recipient: string) => {
+  const { data } = await client.post<{ success: boolean; message: string }>('/api/admin/smtp-test', { recipient });
+  return data;
+};

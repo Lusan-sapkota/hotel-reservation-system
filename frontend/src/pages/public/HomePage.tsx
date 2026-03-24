@@ -11,17 +11,17 @@ const bannerSlides = [
   {
     image: '/images/banner1.jpg',
     title: 'Welcome to StarterHotel',
-    subtitle: 'A luxury experience like no other',
+    subtitle: 'Your home in the heart of Thamel, Kathmandu',
   },
   {
     image: '/images/banner2.jpg',
-    title: 'Relax & Enjoy',
-    subtitle: 'Premium rooms with stunning views',
+    title: 'Himalayan Views',
+    subtitle: 'Wake up to the majestic mountains of Nepal',
   },
   {
     image: '/images/banner3.jpg',
     title: 'Book Your Stay',
-    subtitle: 'Best rates guaranteed for you',
+    subtitle: 'Best rates in Thamel, guaranteed',
   },
 ];
 
@@ -60,8 +60,12 @@ export default function HomePage() {
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await submitContact(contactForm);
-      toast.success('Message sent successfully!');
+      const result = await submitContact(contactForm);
+      if (result.email_confirmation_sent) {
+        toast.success('Message sent! A confirmation has been emailed to you.', { duration: 5000 });
+      } else {
+        toast.success('Message sent successfully!');
+      }
       setContactForm({ name: '', email: '', phone: '', message: '' });
     } catch {
       toast.error('Failed to send message');
@@ -167,14 +171,15 @@ export default function HomePage() {
               <h2 className="text-3xl font-bold text-brand-ink mb-2">About Us</h2>
               <div className="w-16 h-1 bg-brand-gold mb-6" />
               <p className="text-gray-600 mb-4 leading-relaxed">
-                Welcome to StarterHotel, where luxury meets comfort. Nestled in the heart of the city,
-                our hotel offers an unparalleled experience with world-class amenities, exquisite dining,
-                and personalized service.
+                Welcome to StarterHotel, nestled in the vibrant heart of Thamel, Kathmandu. Our hotel
+                blends traditional Nepali warmth with modern luxury, offering an unforgettable gateway
+                to the Himalayas and Kathmandu Valley&apos;s rich cultural heritage.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Whether you&apos;re here for business or leisure, our dedicated team ensures every moment
-                of your stay is memorable. From our elegantly designed rooms to our state-of-the-art facilities,
-                every detail has been crafted with your comfort in mind.
+                From our rooftop terrace with panoramic mountain views to rooms adorned with Newari
+                woodwork and local textiles, every detail celebrates Nepal&apos;s beauty. Whether
+                you&apos;re trekking to Everest Base Camp or exploring ancient temples, we&apos;re your
+                perfect home base.
               </p>
               <Link
                 to="/about"
@@ -185,7 +190,7 @@ export default function HomePage() {
             </div>
             <div className="relative">
               <img
-                src="/images/about-img.jpg"
+                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80"
                 alt="About our hotel"
                 className="rounded-lg shadow-lg w-full object-cover h-[400px]"
               />
@@ -213,7 +218,7 @@ export default function HomePage() {
                     src={getImageUrl(room.image)}
                     alt={room.room_title || 'Room'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/room/room1.jpg'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/room1.jpg'; }}
                   />
                   {room.room_type && (
                     <span className="absolute top-3 left-3 bg-brand-primary text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -274,13 +279,21 @@ export default function HomePage() {
             <p className="text-gray-600">Explore our beautiful spaces</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            {[
+              'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&q=80',
+              'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&q=80',
+              'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=400&q=80',
+              'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&q=80',
+              'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=400&q=80',
+              'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&q=80',
+              'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80',
+              'https://images.unsplash.com/photo-1605346434674-a440ca4dc4c0?w=400&q=80',
+            ].map((src, i) => (
               <div key={i} className="relative overflow-hidden rounded-lg group aspect-square">
                 <img
-                  src={`/images/gallery/gallery${i}.jpg`}
-                  alt={`Gallery ${i}`}
+                  src={src}
+                  alt={`Gallery ${i + 1}`}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => { (e.target as HTMLImageElement).src = `/gallary/gallery${i}.jpg`; }}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
               </div>
@@ -352,7 +365,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-brand-ink">Address</h4>
-                  <p className="text-gray-600 text-sm">Location of Hotel, City, Country</p>
+                  <p className="text-gray-600 text-sm">Thamel, Kathmandu 44600, Nepal</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -361,7 +374,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-brand-ink">Phone</h4>
-                  <p className="text-gray-600 text-sm">+12 1234567890</p>
+                  <p className="text-gray-600 text-sm">+977 1-4700123</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -370,13 +383,13 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-brand-ink">Email</h4>
-                  <p className="text-gray-600 text-sm">demo@gmail.com</p>
+                  <p className="text-gray-600 text-sm">info@starterhotel.com.np</p>
                 </div>
               </div>
               <div className="rounded-lg overflow-hidden h-48">
                 <iframe
                   title="Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387190.2799140298!2d-74.25987584510595!3d40.697670063847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY!5e0!3m2!1sen!2sus!4v1"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.2!2d85.3103!3d27.7153!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb18fcb77fd4bd%3A0x58099b1deffed8d4!2sThamel%2C%20Kathmandu%2044600!5e0!3m2!1sen!2snp!4v1"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

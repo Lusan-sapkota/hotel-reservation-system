@@ -117,6 +117,24 @@ export interface GalleryResponse {
   gallery: GalleryItem[];
 }
 
+export interface Blog {
+  id: number;
+  title: string;
+  excerpt: string | null;
+  content: string | null;
+  image: string | null;
+  image_raw: string | null;
+  category: string | null;
+  author: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogsResponse {
+  count: number;
+  blogs: Blog[];
+}
+
 export interface RecommendationsResponse {
   count: number;
   algorithm: string;

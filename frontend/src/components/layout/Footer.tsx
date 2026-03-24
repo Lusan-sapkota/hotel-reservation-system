@@ -12,7 +12,7 @@ export default function Footer() {
               Starter<span className="text-brand-gold">Hotel</span>
             </h3>
             <p className="text-sm leading-relaxed text-gray-400">
-              Experience luxury and comfort at our premium hotel. We provide the best rooms and services for an unforgettable stay.
+              Your home in the heart of Thamel, Kathmandu. Traditional Nepali hospitality meets modern comfort with stunning Himalayan views.
             </p>
           </div>
 
@@ -42,15 +42,15 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="text-brand-gold mt-0.5 flex-shrink-0" />
-                <span>Location of Hotel, City, Country</span>
+                <span>Thamel, Kathmandu 44600, Nepal</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="text-brand-gold flex-shrink-0" />
-                <span>+12 1234567890</span>
+                <span>+977 1-4700123</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail size={16} className="text-brand-gold flex-shrink-0" />
-                <span>demo@gmail.com</span>
+                <span>info@starterhotel.com.np</span>
               </li>
             </ul>
           </div>

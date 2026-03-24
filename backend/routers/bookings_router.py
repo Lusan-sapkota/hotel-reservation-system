@@ -59,7 +59,7 @@ def create_booking(
         raise
 
     booking_data = _serialize_booking(db, booking)
-    email_sent, email_message = _send_booking_confirmation_email(booking_data)
+    email_sent, email_message = _send_booking_confirmation_email(booking_data, db=db)
     return {
         "message": "Room booked successfully",
         "booking": booking_data,
@@ -107,7 +107,7 @@ def create_booking_legacy(
         raise
 
     booking_data = _serialize_booking(db, booking)
-    email_sent, email_message = _send_booking_confirmation_email(booking_data)
+    email_sent, email_message = _send_booking_confirmation_email(booking_data, db=db)
     return {
         "message": "Room booked successfully",
         "booking": booking_data,
